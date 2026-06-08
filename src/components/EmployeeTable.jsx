@@ -2,8 +2,9 @@ import React from 'react';
 // Link for client-side navigation; used to send the user to the edit page.
 import { Link } from 'react-router-dom';
 
-// A reusable "presentational" component — it only renders what it receives via props
-// and calls callbacks for user actions. It owns no state of its own.
+// Presentational ("dumb") component — it only renders what it receives via props
+// and calls callbacks for user actions. It owns no state of its own and doesn't
+// access context. This makes it easy to reuse in both HomePage and AllEmployeesPage.
 // Props:
 //   employees — array of employee objects to display
 //   onDelete  — function called with an employee's id when Delete is clicked
@@ -22,10 +23,11 @@ function EmployeeTable({ employees, onDelete }) {
       </thead>
       <tbody>
         {/* .map() transforms the employees array into an array of <tr> JSX elements.
-            The `key` prop must be unique per item — React uses it to identify which
-            rows changed, were added, or were removed, so it only re-renders those rows
-            instead of the whole table. Using the stable employee id (not array index)
-            prevents subtle bugs when items are reordered or deleted. */}
+            The `key` prop must be unique per sibling — React uses it internally to
+            identify which rows changed, were added, or were removed between renders,
+            so it only updates those rows instead of re-rendering the whole table.
+            We use the stable employee id rather than the array index: if rows are
+            deleted or reordered, index-based keys cause subtle rendering bugs. */}
         {employees.map(emp => (
           <tr key={emp.id}>
             <td>{emp.name}</td>
@@ -35,13 +37,14 @@ function EmployeeTable({ employees, onDelete }) {
             <td>{emp.startDate}</td>
             <td className="actions">
               {/* Template literal builds the edit URL dynamically for each employee.
-                  React Router matches this against the "/edit/:id" route in App.js. */}
+                  React Router matches "/edit/42" against the "/edit/:id" route. */}
               <Link to={`/edit/${emp.id}`} className="btn btn-sm btn-edit">
                 Edit
               </Link>
 
-              {/* Arrow function in onClick: without it, onDelete(emp.id) would be called
-                  immediately during render rather than when the button is clicked. */}
+              {/* Arrow function in onClick: without the wrapper, onDelete(emp.id) would
+                  be called immediately during render (as the return value of the call),
+                  not when the button is clicked. The arrow function defers execution. */}
               <button
                 className="btn btn-sm btn-delete"
                 onClick={() => onDelete(emp.id)}
